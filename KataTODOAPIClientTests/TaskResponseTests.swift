@@ -1,25 +1,17 @@
-//
-//  TODOAPIClientTests.swift
-//  KataTODOAPIClient
-//
-//  Created by Pedro Vicente Gomez on 12/02/16.
-//  Copyright © 2016 Karumi. All rights reserved.
-//
 
-import Foundation
 import Nocilla
 import Nimble
 import XCTest
 import Result
 @testable import KataTODOAPIClient
 
-class TODOAPIClientTests: NocillaTestCase {
+class TaskResponseTests: NocillaTestCase {
 
-    fileprivate let apiClient = TODOAPIClient()
-    fileprivate let anyTask = TaskDTO(userId: "1", id: "2", title: "Finish this kata", completed: true)
+    private let apiClient = TODOAPIClient()
+    private let anyTask = TaskDTO(userId: "1", id: "2", title: "Finish this kata", completed: true)
 
     func testSendsContentTypeHeader() {
-        stubRequest("GET", "http://jsonplaceholder.typicode.com/todos")
+        _ = stubRequest("GET", "http://jsonplaceholder.typicode.com/todos")
             .withHeaders(["Content-Type": "application/json", "Accept": "application/json"])?
             .andReturn(200)
 
@@ -32,7 +24,7 @@ class TODOAPIClientTests: NocillaTestCase {
     }
 
     func testParsesTasksProperlyGettingAllTheTasks() {
-        stubRequest("GET", "http://jsonplaceholder.typicode.com/todos")
+        _ = stubRequest("GET", "http://jsonplaceholder.typicode.com/todos")
             .andReturn(200)?
             .withJsonBody(fromJsonFile("getTasksResponse"))
 
@@ -55,6 +47,30 @@ class TODOAPIClientTests: NocillaTestCase {
         }
 
         expect(result?.error).toEventually(equal(TODOAPIClientError.networkError))
+    }
+    
+    func testReturnsItemNotFoundIfCallReturns404() {
+        _ = stubRequest("GET", "http://jsonplaceholder.typicode.com/todos")
+            .andReturn(404)
+        
+        var result: Result<[TaskDTO], TODOAPIClientError>?
+        apiClient.getAllTasks { response in
+            result = response
+        }
+        
+        expect(result?.error).toEventually(equal(TODOAPIClientError.itemNotFound))
+    }
+    
+    func testReturnsUnknownErrorWithErrorCodeIfCallReturnsAnError() {
+        _ = stubRequest("GET", "http://jsonplaceholder.typicode.com/todos")
+            .andReturn(450)
+        
+        var result: Result<[TaskDTO], TODOAPIClientError>?
+        apiClient.getAllTasks { response in
+            result = response
+        }
+        
+        expect(result?.error).toEventually(equal(TODOAPIClientError.unknownError(code: 450)))
     }
 
     private func assertTaskContainsExpectedValues(task: TaskDTO) {
