@@ -22,6 +22,30 @@ class TaskByIdResponseTests: NocillaTestCase {
         assertTaskContainsExpectedValues(task: result!.value!)
     }
     
+    func testReturnsItemNotFoundIfCallReturns404() {
+        _ = stubRequest("GET", "http://jsonplaceholder.typicode.com/todos/1")
+            .andReturn(404)
+        
+        var result: Result<TaskDTO, TODOAPIClientError>?
+        apiClient.getTaskById("1") { response in
+            result = response
+        }
+        
+        expect(result?.error).toEventually(equal(TODOAPIClientError.itemNotFound))
+    }
+    
+    func testReturnsUnknownErrorWithErrorCodeIfCallReturnsAnError() {
+        _ = stubRequest("GET", "http://jsonplaceholder.typicode.com/todos/1")
+            .andReturn(450)
+        
+        var result: Result<TaskDTO, TODOAPIClientError>?
+        apiClient.getTaskById("1") { response in
+            result = response
+        }
+        
+        expect(result?.error).toEventually(equal(TODOAPIClientError.unknownError(code: 450)))
+    }
+    
     private func assertTaskContainsExpectedValues(task: TaskDTO) {
         expect(task.id).to(equal(expectedTask.id))
         expect(task.userId).to(equal(expectedTask.userId))
