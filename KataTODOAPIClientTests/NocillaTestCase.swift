@@ -1,12 +1,4 @@
-//
-//  NocillaTestCase.swift
-//  KataTODOAPIClient
-//
-//  Created by Pedro Vicente Gomez on 12/02/16.
-//  Copyright © 2016 Karumi. All rights reserved.
-//
 
-import Foundation
 import XCTest
 import Nocilla
 
@@ -35,7 +27,7 @@ open class NocillaTestCase: XCTestCase {
         let absolutePath =  path ?? ""
         do {
             let content = try String(contentsOfFile: absolutePath, encoding: String.Encoding.utf8)
-            if content.characters.last == "\n"{
+            if content.last == "\n" {
                 return NSString(string: content.substring(to: content.index(before: content.endIndex)))
             } else {
                 return NSString(string: content)
